@@ -1,5 +1,5 @@
-# Source script
-#source <somewhere>/zinfo_line.zsh
+FPATH=<SOMEWHERE>/zinfo_line/src:$FPATH
+autoload -Uz zinfo_line
 
 # Prepare for using add-zsh-hook
 #builtin autoload -U add-zsh-hook
