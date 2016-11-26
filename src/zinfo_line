@@ -37,6 +37,26 @@ function _zinfo_line::macos_battery_info()
   fi
 }
 
+function _zinfo_line::linux_battery_info()
+{
+  # TODO: Clean up following task
+  if [[ -x $(which acpi) ]]
+  then
+    acpi -b        |
+      grep Battery |
+      head -1      |
+      sed 's/[^,]*[^0-9]*\([0-9]*%\)[^0-9]*\([0-9:]*\).*/\1 \2/g'
+  fi
+}
+
+function _zinfo_line::formatted_battery_info()
+{
+  case ${OSTYPE} in
+    darwin*) _zinfo_line::macos_battery_info ;;
+    *)       _zinfo_line::linux_battery_info ;;
+  esac
+}
+
 function zinfo_line()
 {
     #
@@ -102,21 +122,8 @@ function zinfo_line()
     ## Load value
     s_load=$(_zinfo_line::formatted_uptime)
 
-    case ${OSTYPE} in
-        darwin*) # Mac OS
-            s_acpi=$(_zinfo_line::macos_battery_info)
-            ;;
-
-        *) # Others
-            # Load acpi battery info
-            [[ -x `builtin which acpi` ]] && s_acpi=$(
-                acpi -b      |
-                grep Battery |
-                head -1      |
-                sed 's/[^,]*[^0-9]*\([0-9]*%\)[^0-9]*\([0-9:]*\).*/\1 \2/g'
-            )
-            ;;
-    esac
+    ## battery info
+    s_acpi=$(_zinfo_line::formatted_battery_info)
 
     # Intialize whole line length
     i_line_length=$COLUMNS
