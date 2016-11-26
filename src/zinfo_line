@@ -9,6 +9,22 @@ function _zinfo_line::parse_lastcmd()
   echo ${query[1]}
 }
 
+#
+# This function returns formatted date for information line
+#
+function _zinfo_line::formatted_date()
+{
+  date '+%Y/%m/%d-%H:%M:%S'
+}
+
+#
+# This function returns formatted uptime information
+#
+function _zinfo_line::formatted_uptime()
+{
+  uptime | sed 's!^.*up \([0-9]*\) days.*: \([0-9. ]*\)$!{\1d, \2}!'
+}
+
 function zinfo_line()
 {
     #
@@ -69,16 +85,10 @@ function zinfo_line()
     s_cmd=$(_zinfo_line::parse_lastcmd ${1})
 
     ## Date string
-    [ -x `builtin which date` ] && s_date=$(
-        date +%Y/%m/%d-%H:%M:%S
-    )
+    s_date=$(_zinfo_line::formatted_date)
+
     ## Load value
-    [ -x `builtin which uptime` ] && s_load=$(
-        uptime             |
-        sed 's/.*load //g' |
-        cut -d ':' -f 2    |
-        sed 's/^ //g'
-    )
+    s_load=$(_zinfo_line::formatted_uptime)
 
     case ${OSTYPE} in
         darwin*) # Mac OS
