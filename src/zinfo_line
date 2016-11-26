@@ -25,6 +25,18 @@ function _zinfo_line::formatted_uptime()
   uptime | sed 's!^.*up \([0-9]*\) days.*: \([0-9. ]*\)$!{\1d, \2}!'
 }
 
+#
+# This function returns macOS battery information
+#
+function _zinfo_line::macos_battery_info()
+{
+  # Here, echo reduces unnecessary linebreaks
+  if [[ -x $(which pmset) ]]
+  then
+    echo $(pmset -g batt | egrep -wo '([0-9]*%|[0-9]*:[0-9]*)')
+  fi
+}
+
 function zinfo_line()
 {
     #
@@ -92,13 +104,9 @@ function zinfo_line()
 
     case ${OSTYPE} in
         darwin*) # Mac OS
-            [[ -x `builtin which pmset` ]] && s_acpi=$(
-                pmset -g ps  |
-                grep Battery |
-                grep %       |
-                sed 's/^[^0-9]*[0-9]*[^0-9]*\([0-9%]*\)[^0-9]*\([0-9:]*\)[^0-9]*$/\1, \2/g'
-            )
+            s_acpi=$(_zinfo_line::macos_battery_info)
             ;;
+
         *) # Others
             # Load acpi battery info
             [[ -x `builtin which acpi` ]] && s_acpi=$(
