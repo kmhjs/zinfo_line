@@ -43,9 +43,6 @@ function zinfo_line()
     # Final result
     local s_status_line
 
-    # Colors
-    local s_color_green s_color_blue s_color_gray s_color_init
-
     # Commands to be ignored
     local a_exceptions
 
@@ -54,12 +51,6 @@ function zinfo_line()
 
     # Exceptions
     a_exceptions=($(echo $ZMIDLINE_IGN_COMMAND | tr ':' ' '))
-
-    # Colors
-    s_color_green='\e[0;32m'
-    s_color_blue='\e[0;34m'
-    s_color_gray='\e[0;37m'
-    s_color_init='\e[0;0m'
 
     # Separators
     s_sep_head="> "
@@ -150,13 +141,13 @@ function zinfo_line()
         ## Create status bar
         s_status_line=""
         [ $b_flags[1] = 1 ] && s_status_line=${s_status_line}${s_sep_head}
-        [ $b_flags[2] = 1 ] && s_status_line=${s_status_line}${s_color_gray}${s_date}${s_color_init}${s_sep_date_cmd}
-        [ $b_flags[1] = 1 ] && s_status_line=${s_status_line}${s_color_green}${s_cmd}${s_color_init}
-        [ $b_flags[5] = 1 ] && s_status_line=${s_status_line}${s_sep_cmd_line}${s_color_blue}${s_line}${s_color_init}
+        [ $b_flags[2] = 1 ] && s_status_line=${s_status_line}${fg[gray]}${s_date}${fg[default]}${s_sep_date_cmd}
+        [ $b_flags[1] = 1 ] && s_status_line=${s_status_line}${fg[green]}${s_cmd}${fg[default]}
+        [ $b_flags[5] = 1 ] && s_status_line=${s_status_line}${s_sep_cmd_line}${fg[blue]}${s_line}${fg[default]}
         [ $b_flags[6] = 1 ] && s_status_line=${s_status_line}${s_sep_line_sub}
-        [ $b_flags[4] = 1 ] && s_status_line=${s_status_line}${s_color_gray}${s_load}${s_color_init}
+        [ $b_flags[4] = 1 ] && s_status_line=${s_status_line}${fg[gray]}${s_load}${fg[default]}
         [ $b_flags[7] = 1 ] && s_status_line=${s_status_line}${s_sep_top_batt}
-        [ $b_flags[3] = 1 ] && s_status_line=${s_status_line}${s_color_gray}${s_acpi}${s_color_init}
+        [ $b_flags[3] = 1 ] && s_status_line=${s_status_line}${fg[gray]}${s_acpi}${fg[default]}
         [ $b_flags[6] = 1 ] && s_status_line=${s_status_line}${s_sep_batt_end}
 
         ## Show
