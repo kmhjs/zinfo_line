@@ -1,3 +1,14 @@
+#
+# This function parses first command name of input command query.
+# Note that, this function ignores heading spaces.
+#
+function _zinfo_line::parse_lastcmd()
+{
+  local -a query=(${(s: :)${1}})
+
+  echo ${query[1]}
+}
+
 function zinfo_line()
 {
     #
@@ -30,7 +41,7 @@ function zinfo_line()
     local b_flags
 
     # Final result
-    local s_status_line  
+    local s_status_line
 
     # Colors
     local s_color_green s_color_blue s_color_gray s_color_init
@@ -64,10 +75,8 @@ function zinfo_line()
 
     # Get values
     ## Sent command
-    s_cmd=$(
-        echo ${(s: :)${1}} |
-        sed 's/\([^ ]*\)[ ]*.*/\1/g'
-    )
+    s_cmd=$(_zinfo_line::parse_lastcmd ${1})
+
     ## Date string
     [ -x `builtin which date` ] && s_date=$(
         date +%Y/%m/%d-%H:%M:%S
