@@ -77,13 +77,10 @@ function zinfo_line()
     # - ())   s_sep_batt_end
 
     # Values to be shown
-    local s_date s_cmd s_line s_acpi
-
-    # Separators
-    local s_sep_head s_sep_date_cmd s_sep_line_sub s_sep_top_batt s_sep_batt_end s_sep_cmd_line
+    local s_line
 
     # Mid line length
-    local i_line_length
+    local terminal_width
 
     # Flags. Show element or not
     local b_flags
@@ -91,77 +88,74 @@ function zinfo_line()
     # Final result
     local s_status_line
 
-    # Commands to be ignored
-    local a_exceptions
-
     # Array for calculation
     local a_calc
 
-    # Exceptions
-    a_exceptions=($(echo $ZMIDLINE_IGN_COMMAND | tr ':' ' '))
+    # Exceptions (Commands to be ignored)
+    local -a a_exceptions=(${(s@:@)${ZMIDLINE_IGN_COMMAND}})
 
     # Separators
-    s_sep_head="> "
-    s_sep_date_cmd=" : "
-    s_sep_cmd_line=" "
-    s_sep_line_sub=" ("
-    s_sep_top_batt=" / "
-    s_sep_batt_end=")"
-    s_sep_cmd_line=" "
+    local s_sep_head="> "
+    local s_sep_date_cmd=" : "
+    local s_sep_cmd_line=" "
+    local s_sep_line_sub=" ("
+    local s_sep_top_batt=" / "
+    local s_sep_batt_end=")"
+    local s_sep_cmd_line=" "
 
     # Init flags
     b_flags=(0 0 0 0 0 0 0)
 
     # Get values
     ## Sent command
-    s_cmd=$(_zinfo_line::parse_lastcmd ${1})
+    local s_cmd=$(_zinfo_line::parse_lastcmd ${1})
 
     ## Date string
-    s_date=$(_zinfo_line::formatted_date)
+    local s_date=$(_zinfo_line::formatted_date)
 
     ## Load value
-    s_load=$(_zinfo_line::formatted_uptime)
+    local s_load=$(_zinfo_line::formatted_uptime)
 
     ## battery info
-    s_acpi=$(_zinfo_line::formatted_battery_info)
+    local s_acpi=$(_zinfo_line::formatted_battery_info)
 
     # Intialize whole line length
-    i_line_length=$COLUMNS
+    terminal_width=$COLUMNS
 
     # Main
     if [ ${a_exceptions[(I)$s_cmd]} = 0 ]; then
         # Calculate size of each lines
-        [ $(($i_line_length - $#s_cmd - $#s_sep_head)) -ge 0 ]         &&
-            i_line_length=$(($i_line_length - $#s_cmd - $#s_sep_head)) &&
+        [ $(($terminal_width - $#s_cmd - $#s_sep_head)) -ge 0 ]         &&
+            terminal_width=$(($terminal_width - $#s_cmd - $#s_sep_head)) &&
             b_flags[1]=1
 
-        [ $(($i_line_length - $#s_date - $#s_sep_date_cmd)) -ge 0 ]         &&
-            i_line_length=$(($i_line_length - $#s_date - $#s_sep_date_cmd)) &&
+        [ $(($terminal_width - $#s_date - $#s_sep_date_cmd)) -ge 0 ]         &&
+            terminal_width=$(($terminal_width - $#s_date - $#s_sep_date_cmd)) &&
             b_flags[2]=1
 
         [ $s_acpi ]                                      &&
-            [ $(($i_line_length - $#s_acpi)) -ge 0 ]     &&
-            i_line_length=$(($i_line_length - $#s_acpi)) &&
+            [ $(($terminal_width - $#s_acpi)) -ge 0 ]     &&
+            terminal_width=$(($terminal_width - $#s_acpi)) &&
             b_flags[3]=1
 
-        [ $(($i_line_length - $#s_load)) -ge 0 ]         &&
-            i_line_length=$(($i_line_length - $#s_load)) &&
+        [ $(($terminal_width - $#s_load)) -ge 0 ]         &&
+            terminal_width=$(($terminal_width - $#s_load)) &&
             b_flags[4]=1
 
         [ $b_flags[3] = 1 -o $b_flags[4] = 1 ] &&
-            i_line_length=$(($i_line_length - $#s_sep_line_sub - $#s_sep_batt_end)) &&
+            terminal_width=$(($terminal_width - $#s_sep_line_sub - $#s_sep_batt_end)) &&
             b_flags[6]=1
 
         [ $b_flags[3] = 1 -a $b_flags[4] = 1 ]                   &&
-            i_line_length=$(($i_line_length - $#s_sep_top_batt)) &&
+            terminal_width=$(($terminal_width - $#s_sep_top_batt)) &&
             b_flags[7]=1
 
-        [ $i_line_length -ge 1 ]                                 &&
-            i_line_length=$(($i_line_length - $#s_sep_cmd_line)) &&
+        [ $terminal_width -ge 1 ]                                 &&
+            terminal_width=$(($terminal_width - $#s_sep_cmd_line)) &&
             b_flags[5]=1
 
         ## Create separator line
-        s_line=${(l.$i_line_length..-.)}
+        s_line=${(l.$terminal_width..-.)}
 
         ## Create status bar
         s_status_line=""
