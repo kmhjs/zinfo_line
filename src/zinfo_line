@@ -89,7 +89,15 @@ function zinfo_line()
     local s_sep_cmd_line=" "
 
     # Flags. Show element or not
-    local -a b_flags=(0 0 0 0 0 0 0)
+    local -A enable_flags=(
+      'last_command_info'      0
+      'last_command_date_info' 0
+      'acpi_info'              0
+      'load_info'              0
+      'middle_line'            0
+      'subinfo_separator'      0
+      'load-battery_separator' 0
+    )
 
     # Get values
     ## Sent command
@@ -116,13 +124,13 @@ function zinfo_line()
     terminal_width=$((${terminal_width} - ${#s_cmd} - ${#s_sep_head}))
     if (( ${terminal_width} >= 0 ))
     then
-      b_flags[1]=1
+      enable_flags['last_command_info']=1
     fi
 
     terminal_width=$((${terminal_width} - ${#s_date} - ${#s_sep_date_cmd}))
     if (( ${terminal_width} >= 0 ))
     then
-      b_flags[2]=1
+      enable_flags['last_command_date_info']=1
     fi
 
     if [[ -n ${s_acpi} ]]
@@ -130,32 +138,32 @@ function zinfo_line()
       terminal_width=$((${terminal_width} - ${#s_acpi}))
       if (( ${terminal_width} >= 0 ))
       then
-        b_flags[3]=1
+        enable_flags['acpi_info']=1
       fi
     fi
 
     terminal_width=$((${terminal_width} - ${#s_load}))
     if (( ${terminal_width} >= 0 ))
     then
-      b_flags[4]=1
+      enable_flags['load_info']=1
     fi
 
-    if [[ $b_flags[3] == 1 || $b_flags[4] == 1 ]]
+    if [[ ${enable_flags['acpi_info']} == 1 || ${enable_flags['load_info']} == 1 ]]
     then
       terminal_width=$((${terminal_width} - ${#s_sep_line_sub} - ${#s_sep_batt_end}))
-      b_flags[6]=1
+      enable_flags['subinfo_separator']=1
     fi
 
-    if [[ $b_flags[3] == 1 && $b_flags[4] == 1 ]]
+    if [[ ${enable_flags['acpi_info']} == 1 && ${enable_flags['load_info']} == 1 ]]
     then
       terminal_width=$((${terminal_width} - ${#s_sep_top_batt}))
-      b_flags[7]=1
+      enable_flags['load-battery_separator']=1
     fi
 
     if (( ${terminal_width} >= 1 ))
     then
       terminal_width=$((${terminal_width} - ${#s_sep_cmd_line}))
-      b_flags[5]=1
+      enable_flags['middle_line']=1
     fi
 
     ## Create separator line
@@ -164,47 +172,47 @@ function zinfo_line()
     ## Create status bar
     local s_status_line=""
 
-    if [[ $b_flags[1] == 1 ]]
+    if [[ ${enable_flags['last_command_info']} == 1 ]]
     then
       s_status_line+=${s_sep_head}
     fi
 
-    if [[ $b_flags[2] == 1 ]]
+    if [[ ${enable_flags['last_command_date_info']} == 1 ]]
     then
       s_status_line+=${fg[gray]}${s_date}${fg[default]}${s_sep_date_cmd}
     fi
 
-    if [[ $b_flags[1] == 1 ]]
+    if [[ ${enable_flags['last_command_info']} == 1 ]]
     then
       s_status_line+=${fg[green]}${s_cmd}${fg[default]}
     fi
 
-    if [[ $b_flags[5] == 1 ]]
+    if [[ ${enable_flags['middle_line']} == 1 ]]
     then
       s_status_line+=${s_sep_cmd_line}${fg[blue]}${s_line}${fg[default]}
     fi
 
-    if [[ $b_flags[6] == 1 ]]
+    if [[ ${enable_flags['subinfo_separator']} == 1 ]]
     then
       s_status_line+=${s_sep_line_sub}
     fi
 
-    if [[ $b_flags[4] == 1 ]]
+    if [[ ${enable_flags['load_info']} == 1 ]]
     then
       s_status_line+=${fg[gray]}${s_load}${fg[default]}
     fi
 
-    if [[ $b_flags[7] == 1 ]]
+    if [[ ${enable_flags['load-battery_separator']} == 1 ]]
     then
       s_status_line+=${s_sep_top_batt}
     fi
 
-    if [[ $b_flags[3] == 1 ]]
+    if [[ ${enable_flags['acpi_info']} == 1 ]]
     then
       s_status_line+=${fg[gray]}${s_acpi}${fg[default]}
     fi
 
-    if [[ $b_flags[6] == 1 ]]
+    if [[ ${enable_flags['subinfo_separator']} == 1 ]]
     then
       s_status_line+=${s_sep_batt_end}
     fi
