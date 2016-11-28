@@ -59,23 +59,6 @@ function _zinfo_line::formatted_battery_info()
 
 function zinfo_line()
 {
-    #
-    # show mid line
-    #
-
-    # RESPONSIVE?
-    # || > 2014/07/13-11:22:58 : ls ---------- (0.07, 0.05, 0.05 / 79% 03:22:16)
-    # - (> )  s_sep_head,
-    # -       s_date
-    # - ( : ) s_sep_date_cmd,
-    # -       s_cmd,
-    # - ( )   s_sep_cmd_line,
-    # - (---) s_line,
-    # - ( ()  s_sep_line_sub,
-    # - ( / ) s_sep_top_batt,
-    # -       s_batt,
-    # - ())   s_sep_batt_end
-
     # Exceptions (Commands to be ignored)
     local -a a_exceptions=(${(s@:@)${ZMIDLINE_IGN_COMMAND}})
 
@@ -119,8 +102,23 @@ function zinfo_line()
     # Intialize whole line length
     local -i terminal_width=${COLUMNS}
 
+    #
+    # States
+    #
+    # Small
+    #  |
+    #  | > command
+    #  | > date : cmd
+    #  | > date : cmd (battery)
+    #  | > date : cmd (load / battery)
+    #  | > date : cmd ----- (load / battery)
+    #  |
+    #  V
+    # Large
+    #
+
     # Main
-    ## Calculate size of each lines
+    ## Compute heading `> cmd`
     terminal_width=$((${terminal_width} - ${#s_cmd} - ${#s_sep_head}))
     if (( ${terminal_width} >= 0 ))
     then
@@ -218,5 +216,5 @@ function zinfo_line()
     fi
 
     ## Show
-    echo $s_status_line
+    echo ${s_status_line}
   }
