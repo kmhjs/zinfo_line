@@ -1,4 +1,4 @@
-# zinfo_line
+# zinfo\_line
 
 zsh information line plugin
 
@@ -8,8 +8,8 @@ To display additional information on terminal (zsh)
 
 ## Installation
 
-* Add some lines to your .zshenv from .zshenv of this project. (If you wanted to ignore some commands)
-* Add some lines to your .zshrc from .zshrc of this project.
+* Add some lines to your `.zshenv` from `.zshenv` of this project. (If you wanted to ignore some commands)
+* Add some lines to your `.zshrc` from `.zshrc` of this project.
 
 ## Note
 
@@ -21,4 +21,4 @@ This application may use `$ZMIDLINE_IGN_COMMAND` variable.
 
 ## Licence
 
-* NYSL (http://www.kmonos.net/nysl/) 0.9981
+* MIT
