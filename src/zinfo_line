@@ -80,7 +80,6 @@ function zinfo_line()
     enable_flags['last_command_date_info']=0
     enable_flags['acpi_info']=0
     enable_flags['load_info']=0
-    enable_flags['middle_line']=0
     enable_flags['subinfo_separator']=0
     enable_flags['load-battery_separator']=0
 
@@ -153,6 +152,7 @@ function zinfo_line()
       left_info+=${fg[green]}${s_cmd}${fg[default]}
     fi
 
+
     # Compute right info
     ## Compute available length and features
     if [[ -n ${s_acpi} ]]
@@ -201,21 +201,18 @@ function zinfo_line()
       right_info+=${right_info_symbols['tail']}
     fi
 
+
     # Create separator line
     local line_separator="${separators['cmd-line']}${separators['cmd-line']}"
-    if (( ${terminal_width} >= ${#line_separator} + 1 ))
+    local minimum_length=1
+    local middle_line=''
+    if (( ${terminal_width} >= ${#line_separator} + ${minimum_length} ))
     then
       terminal_width=$((${terminal_width} - ${#line_separator}))
-      enable_flags['middle_line']=1
+      middle_line=${separators['cmd-line']}${fg[blue]}${(l.${terminal_width}..-.)}${fg[default]}${separators['cmd-line']}
     fi
 
-    local middle_line=''
-    if [[ ${enable_flags['middle_line']} == 1 ]]
-    then
-      local s_line=${(l.${terminal_width}..-.)}
-      middle_line=${separators['cmd-line']}${fg[blue]}${s_line}${fg[default]}${separators['cmd-line']}
-    fi
 
-    ## Show
+    # Show
     echo "${left_info}${middle_line}${right_info}"
   }
