@@ -66,9 +66,9 @@ function zinfo_line()
     local s_sep_head="> "
     local s_sep_date_cmd=" : "
     local s_sep_cmd_line=" "
-    local s_sep_line_sub=" ("
+    local right_info_separator_head="("
     local s_sep_top_batt=" / "
-    local s_sep_batt_end=")"
+    local right_info_separator_tail=")"
     local s_sep_cmd_line=" "
 
     # Flags. Show element or not
@@ -108,17 +108,20 @@ function zinfo_line()
     # Small
     #  |
     #  | > command
-    #  | > date : cmd
-    #  | > date : cmd (battery)
-    #  | > date : cmd (load / battery)
-    #  | > date : cmd ----- (load / battery)
+    #  | > date : command
+    #  | > date : command (battery)
+    #  | > date : command (load / battery)
+    #  | > date : command ----- (load / battery)
     #  |
     #  V
     # Large
     #
+    # * left_info  : `> date : command`
+    # * right_info : `(load / battery)`
+    #
 
-    # Main
-    ## Compute heading `> cmd`
+    # Compute left info
+    ## Compute available length and features
     terminal_width=$((${terminal_width} - ${#s_cmd} - ${#s_sep_head}))
     if (( ${terminal_width} >= 0 ))
     then
@@ -131,90 +134,88 @@ function zinfo_line()
       enable_flags['last_command_date_info']=1
     fi
 
-    if [[ -n ${s_acpi} ]]
-    then
-      terminal_width=$((${terminal_width} - ${#s_acpi}))
-      if (( ${terminal_width} >= 0 ))
-      then
-        enable_flags['acpi_info']=1
-      fi
-    fi
-
-    terminal_width=$((${terminal_width} - ${#s_load}))
-    if (( ${terminal_width} >= 0 ))
-    then
-      enable_flags['load_info']=1
-    fi
-
-    if [[ ${enable_flags['acpi_info']} == 1 || ${enable_flags['load_info']} == 1 ]]
-    then
-      terminal_width=$((${terminal_width} - ${#s_sep_line_sub} - ${#s_sep_batt_end}))
-      enable_flags['subinfo_separator']=1
-    fi
-
-    if [[ ${enable_flags['acpi_info']} == 1 && ${enable_flags['load_info']} == 1 ]]
-    then
-      terminal_width=$((${terminal_width} - ${#s_sep_top_batt}))
-      enable_flags['load-battery_separator']=1
-    fi
-
-    if (( ${terminal_width} >= 1 ))
-    then
-      terminal_width=$((${terminal_width} - ${#s_sep_cmd_line}))
-      enable_flags['middle_line']=1
-    fi
-
-    ## Create separator line
-    local s_line=${(l.${terminal_width}..-.)}
-
-    ## Create status bar
-    local s_status_line=""
+    ## Build left info
+    local left_info=''
 
     if [[ ${enable_flags['last_command_info']} == 1 ]]
     then
-      s_status_line+=${s_sep_head}
+      left_info+=${s_sep_head}
     fi
 
     if [[ ${enable_flags['last_command_date_info']} == 1 ]]
     then
-      s_status_line+=${fg[gray]}${s_date}${fg[default]}${s_sep_date_cmd}
+      left_info+=${fg[gray]}${s_date}${fg[default]}${s_sep_date_cmd}
     fi
 
     if [[ ${enable_flags['last_command_info']} == 1 ]]
     then
-      s_status_line+=${fg[green]}${s_cmd}${fg[default]}
+      left_info+=${fg[green]}${s_cmd}${fg[default]}
     fi
 
-    if [[ ${enable_flags['middle_line']} == 1 ]]
+    # Compute right info
+
+    ## Compute available length and features
+    if [[ -n ${s_acpi} ]]
     then
-      s_status_line+=${s_sep_cmd_line}${fg[blue]}${s_line}${fg[default]}
+      local right_info_separator="${right_info_separator_head}${right_info_separator_tail}"
+      terminal_width=$((${terminal_width} - ${#s_acpi} - ${#right_info_separator}))
+      if (( ${terminal_width} >= 0 ))
+      then
+        enable_flags['acpi_info']=1
+        enable_flags['subinfo_separator']=1
+      fi
     fi
+
+    terminal_width=$((${terminal_width} - ${#s_load} - ${#s_sep_top_batt}))
+    if (( ${terminal_width} >= 0 ))
+    then
+      enable_flags['load_info']=1
+      enable_flags['load-battery_separator']=1
+    fi
+
+    ## Build right info
+    local right_info=''
 
     if [[ ${enable_flags['subinfo_separator']} == 1 ]]
     then
-      s_status_line+=${s_sep_line_sub}
+      right_info+=${right_info_separator_head}
     fi
 
     if [[ ${enable_flags['load_info']} == 1 ]]
     then
-      s_status_line+=${fg[gray]}${s_load}${fg[default]}
+      right_info+=${fg[gray]}${s_load}${fg[default]}
     fi
 
     if [[ ${enable_flags['load-battery_separator']} == 1 ]]
     then
-      s_status_line+=${s_sep_top_batt}
+      right_info+=${s_sep_top_batt}
     fi
 
     if [[ ${enable_flags['acpi_info']} == 1 ]]
     then
-      s_status_line+=${fg[gray]}${s_acpi}${fg[default]}
+      right_info+=${fg[gray]}${s_acpi}${fg[default]}
     fi
 
     if [[ ${enable_flags['subinfo_separator']} == 1 ]]
     then
-      s_status_line+=${s_sep_batt_end}
+      right_info+=${right_info_separator_tail}
+    fi
+
+    # Create separator line
+    local line_separator="${s_sep_cmd_line}${s_sep_cmd_line}"
+    if (( ${terminal_width} >= ${#line_separator} + 1 ))
+    then
+      terminal_width=$((${terminal_width} - ${#line_separator}))
+      enable_flags['middle_line']=1
+    fi
+
+    local middle_line=''
+    if [[ ${enable_flags['middle_line']} == 1 ]]
+    then
+      local s_line=${(l.${terminal_width}..-.)}
+      middle_line=${s_sep_cmd_line}${fg[blue]}${s_line}${fg[default]}${s_sep_cmd_line}
     fi
 
     ## Show
-    echo ${s_status_line}
+    echo ${left_info}${middle_line}${right_info}
   }
