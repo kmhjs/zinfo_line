@@ -59,160 +59,160 @@ function _zinfo_line::formatted_battery_info()
 
 function zinfo_line()
 {
-    # Exceptions (Commands to be ignored)
-    local -a a_exceptions=(${(s@:@)${ZMIDLINE_IGN_COMMAND}})
+  # Exceptions (Commands to be ignored)
+  local -a exceptions=(${(s@:@)${ZMIDLINE_IGN_COMMAND}})
 
-    # Symbols
-    local -A separators=()
-    separators['date-cmd']=' : '
-    separators['cmd-line']=' '
-    separators['top-batt']=' / '
+  # If exceptions array contains last command, ignore.
+  local s_cmd=$(_zinfo_line::parse_lastcmd ${1})
+  if [[ ${exceptions[(I)$s_cmd]} != 0 ]]
+  then
+    return 1
+  fi
 
-    local heading_symbol='> '
+  # Symbols
+  local -A separators=()
+  separators['date-cmd']=' : '
+  separators['cmd-line']=' '
+  separators['top-batt']=' / '
 
-    local -A right_info_symbols=()
-    right_info_symbols['head']='('
-    right_info_symbols['tail']=')'
+  local heading_symbol='> '
 
-    # Flags. Show element or not
-    local -A enable_flags=()
-    enable_flags['last_command_info']=0
-    enable_flags['last_command_date_info']=0
-    enable_flags['acpi_info']=0
-    enable_flags['load_info']=0
-    enable_flags['subinfo_separator']=0
-    enable_flags['load-battery_separator']=0
+  local -A right_info_symbols=()
+  right_info_symbols['head']='('
+  right_info_symbols['tail']=')'
 
-    # If exceptions array contains last command, ignore.
-    local s_cmd=$(_zinfo_line::parse_lastcmd ${1})
-    if [[ ${a_exceptions[(I)$s_cmd]} != 0 ]]
-    then
-      return 1
-    fi
+  # Flags. Show element or not
+  local -A enable_flags=()
+  enable_flags['last_command_info']=0
+  enable_flags['last_command_date_info']=0
+  enable_flags['acpi_info']=0
+  enable_flags['load_info']=0
+  enable_flags['subinfo_separator']=0
+  enable_flags['load-battery_separator']=0
 
-    # Date string
-    local s_date=$(_zinfo_line::formatted_date)
+  # Date string
+  local s_date=$(_zinfo_line::formatted_date)
 
-    # Load value
-    local s_load=$(_zinfo_line::formatted_uptime)
+  # Load value
+  local s_load=$(_zinfo_line::formatted_uptime)
 
-    # battery info
-    local s_acpi=$(_zinfo_line::formatted_battery_info)
+  # battery info
+  local s_acpi=$(_zinfo_line::formatted_battery_info)
 
-    # Intialize whole line length
-    local -i terminal_width=${COLUMNS}
+  # Intialize whole line length
+  local -i terminal_width=${COLUMNS}
 
-    #
-    # States
-    #
-    # Small
-    #  |
-    #  | > command
-    #  | > date : command
-    #  | > date : command (battery)
-    #  | > date : command (load / battery)
-    #  | > date : command ----- (load / battery)
-    #  |
-    #  V
-    # Large
-    #
-    # * left_info  : `> date : command`
-    # * right_info : `(load / battery)`
-    #
+  #
+  # States
+  #
+  # Small
+  #  |
+  #  | > command
+  #  | > date : command
+  #  | > date : command (battery)
+  #  | > date : command (load / battery)
+  #  | > date : command ----- (load / battery)
+  #  |
+  #  V
+  # Large
+  #
+  # * left_info  : `> date : command`
+  # * right_info : `(load / battery)`
+  #
 
-    # Compute left info
-    ## Compute available length and features
-    terminal_width=$((${terminal_width} - ${#s_cmd} - ${#heading_symbol}))
+  # Compute left info
+  ## Compute available length and features
+  terminal_width=$((${terminal_width} - ${#s_cmd} - ${#heading_symbol}))
+  if (( ${terminal_width} >= 0 ))
+  then
+    enable_flags['last_command_info']=1
+  fi
+
+  terminal_width=$((${terminal_width} - ${#s_date} - ${#separators['date-cmd']}))
+  if (( ${terminal_width} >= 0 ))
+  then
+    enable_flags['last_command_date_info']=1
+  fi
+
+  ## Build left info
+  local left_info=''
+
+  if [[ ${enable_flags['last_command_info']} == 1 ]]
+  then
+    left_info+=${heading_symbol}
+  fi
+
+  if [[ ${enable_flags['last_command_date_info']} == 1 ]]
+  then
+    left_info+=${fg[gray]}${s_date}${fg[default]}${separators['date-cmd']}
+  fi
+
+  if [[ ${enable_flags['last_command_info']} == 1 ]]
+  then
+    left_info+=${fg[green]}${s_cmd}${fg[default]}
+  fi
+
+
+  # Compute right info
+  ## Compute available length and features
+  if [[ -n ${s_acpi} ]]
+  then
+    local right_info_separator="${right_info_symbols['head']}${right_info_symbols['tail']}"
+    terminal_width=$((${terminal_width} - ${#s_acpi} - ${#right_info_separator}))
     if (( ${terminal_width} >= 0 ))
     then
-      enable_flags['last_command_info']=1
+      enable_flags['acpi_info']=1
+      enable_flags['subinfo_separator']=1
     fi
+  fi
 
-    terminal_width=$((${terminal_width} - ${#s_date} - ${#separators['date-cmd']}))
-    if (( ${terminal_width} >= 0 ))
-    then
-      enable_flags['last_command_date_info']=1
-    fi
+  terminal_width=$((${terminal_width} - ${#s_load} - ${#separators['top-batt']}))
+  if (( ${terminal_width} >= 0 ))
+  then
+    enable_flags['load_info']=1
+    enable_flags['load-battery_separator']=1
+  fi
 
-    ## Build left info
-    local left_info=''
+  ## Build right info
+  local right_info=''
 
-    if [[ ${enable_flags['last_command_info']} == 1 ]]
-    then
-      left_info+=${heading_symbol}
-    fi
+  if [[ ${enable_flags['subinfo_separator']} == 1 ]]
+  then
+    right_info+=${right_info_symbols['head']}
+  fi
 
-    if [[ ${enable_flags['last_command_date_info']} == 1 ]]
-    then
-      left_info+=${fg[gray]}${s_date}${fg[default]}${separators['date-cmd']}
-    fi
+  if [[ ${enable_flags['load_info']} == 1 ]]
+  then
+    right_info+=${fg[gray]}${s_load}${fg[default]}
+  fi
 
-    if [[ ${enable_flags['last_command_info']} == 1 ]]
-    then
-      left_info+=${fg[green]}${s_cmd}${fg[default]}
-    fi
+  if [[ ${enable_flags['load-battery_separator']} == 1 ]]
+  then
+    right_info+=${separators['top-batt']}
+  fi
 
+  if [[ ${enable_flags['acpi_info']} == 1 ]]
+  then
+    right_info+=${fg[gray]}${s_acpi}${fg[default]}
+  fi
 
-    # Compute right info
-    ## Compute available length and features
-    if [[ -n ${s_acpi} ]]
-    then
-      local right_info_separator="${right_info_symbols['head']}${right_info_symbols['tail']}"
-      terminal_width=$((${terminal_width} - ${#s_acpi} - ${#right_info_separator}))
-      if (( ${terminal_width} >= 0 ))
-      then
-        enable_flags['acpi_info']=1
-        enable_flags['subinfo_separator']=1
-      fi
-    fi
-
-    terminal_width=$((${terminal_width} - ${#s_load} - ${#separators['top-batt']}))
-    if (( ${terminal_width} >= 0 ))
-    then
-      enable_flags['load_info']=1
-      enable_flags['load-battery_separator']=1
-    fi
-
-    ## Build right info
-    local right_info=''
-
-    if [[ ${enable_flags['subinfo_separator']} == 1 ]]
-    then
-      right_info+=${right_info_symbols['head']}
-    fi
-
-    if [[ ${enable_flags['load_info']} == 1 ]]
-    then
-      right_info+=${fg[gray]}${s_load}${fg[default]}
-    fi
-
-    if [[ ${enable_flags['load-battery_separator']} == 1 ]]
-    then
-      right_info+=${separators['top-batt']}
-    fi
-
-    if [[ ${enable_flags['acpi_info']} == 1 ]]
-    then
-      right_info+=${fg[gray]}${s_acpi}${fg[default]}
-    fi
-
-    if [[ ${enable_flags['subinfo_separator']} == 1 ]]
-    then
-      right_info+=${right_info_symbols['tail']}
-    fi
+  if [[ ${enable_flags['subinfo_separator']} == 1 ]]
+  then
+    right_info+=${right_info_symbols['tail']}
+  fi
 
 
-    # Create separator line
-    local line_separator="${separators['cmd-line']}${separators['cmd-line']}"
-    local minimum_length=1
-    local middle_line=''
-    if (( ${terminal_width} >= ${#line_separator} + ${minimum_length} ))
-    then
-      terminal_width=$((${terminal_width} - ${#line_separator}))
-      middle_line=${separators['cmd-line']}${fg[blue]}${(l.${terminal_width}..-.)}${fg[default]}${separators['cmd-line']}
-    fi
+  # Create separator line
+  local line_separator="${separators['cmd-line']}${separators['cmd-line']}"
+  local minimum_length=1
+  local middle_line=''
+  if (( ${terminal_width} >= ${#line_separator} + ${minimum_length} ))
+  then
+    terminal_width=$((${terminal_width} - ${#line_separator}))
+    middle_line=${separators['cmd-line']}${fg[blue]}${(l.${terminal_width}..-.)}${fg[default]}${separators['cmd-line']}
+  fi
 
 
-    # Show
-    echo "${left_info}${middle_line}${right_info}"
-  }
+  # Show
+  echo "${left_info}${middle_line}${right_info}"
+}
