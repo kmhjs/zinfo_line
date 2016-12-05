@@ -22,7 +22,7 @@ function _zinfo_line::formatted_date()
 #
 function _zinfo_line::formatted_uptime()
 {
-  uptime | sed 's!^.*up \([0-9]*\) days.*: \([0-9. ]*\)$!{\1d, \2}!'
+  uptime | sed 's!^.*up \([0-9]*\) day.*: \([0-9. ]*\)$!{\1d, \2}!'
 }
 
 #
