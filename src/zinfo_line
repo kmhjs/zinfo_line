@@ -18,11 +18,62 @@ function _zinfo_line::formatted_date()
 }
 
 #
-# This function returns formatted uptime information
+# This function returns load average for macos
+#
+function _zinfo_line::macos_load_average()
+{
+  sysctl -n vm.loadavg | sed 's!^{ !!;s! }!!'
+}
+
+#
+# This function returns load average for Linux
+#
+function _zinfo_line::linux_load_average()
+{
+  cat /proc/loadavg | cut -d' ' -f1,2,3
+}
+
+#
+# This function returns formatted date info of load average
+#
+function _zinfo_line::formatted_load_average()
+{
+  case ${OSTYPE} in
+    darwin*) _zinfo_line::macos_load_average ;;
+    *)       _zinfo_line::linux_load_average ;;
+  esac
+}
+
+#
+# This function returns boot time in Unix time for macos
+#
+function _zinfo_line::macos_uptime_sec()
+{
+  sysctl -n kern.boottime | sed 's!^.* sec = \([0-9]*\), .*$!\1!'
+}
+
+#
+# This function returns boot time in Unix time for Linux
+#
+function _zinfo_line::linux_uptime_sec()
+{
+  date +%s -d "now - $(cut -d. -f1 /proc/uptime) sec"
+}
+
+#
+# This function returns formatted date info of uptime
 #
 function _zinfo_line::formatted_uptime()
 {
-  uptime | sed 's!^[0-9: ]*up \([0-9a-z ]*\), [^:]*: \([0-9. ]*\)!{\1, \2}!'
+  local -i uptime_sec
+
+  case ${OSTYPE} in
+    darwin*) uptime_sec=$(_zinfo_line::macos_uptime_sec) ;;
+    *)       uptime_sec=$(_zinfo_line::linux_uptime_sec) ;;
+  esac
+
+  local -i uptime_days=$((($(date +%s) - ${uptime_sec}) / 86400))
+  echo "${uptime_days} days"
 }
 
 #
@@ -94,7 +145,7 @@ function zinfo_line()
   local s_date=$(_zinfo_line::formatted_date)
 
   # Load value
-  local s_load=$(_zinfo_line::formatted_uptime)
+  local s_load="{$(_zinfo_line::formatted_uptime) | $(_zinfo_line::formatted_load_average)}"
 
   # battery info
   local s_acpi=$(_zinfo_line::formatted_battery_info)
