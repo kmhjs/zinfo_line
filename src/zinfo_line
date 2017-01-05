@@ -22,7 +22,11 @@ function _zinfo_line::formatted_date()
 #
 function _zinfo_line::macos_load_average()
 {
-  sysctl -n vm.loadavg | sed 's!^{ !!;s! }!!'
+  local loadavg_str=$(sysctl -n vm.loadavg)
+  local del_heading_brace=${loadavg_str/\{ /}
+  local del_trailing_brace=${del_heading_brace/ \}/}
+
+  echo ${del_trailing_brace}
 }
 
 #
@@ -30,7 +34,8 @@ function _zinfo_line::macos_load_average()
 #
 function _zinfo_line::linux_load_average()
 {
-  cat /proc/loadavg | cut -d' ' -f1,2,3
+  local -a loadavg_arr=($(cat /proc/loadavg))
+  echo ${loadavg_str[1,3]}
 }
 
 #
