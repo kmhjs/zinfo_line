@@ -35,7 +35,7 @@ function _zinfo_line::macos_load_average()
 function _zinfo_line::linux_load_average()
 {
   local -a loadavg_arr=($(cat /proc/loadavg))
-  echo ${loadavg_str[1,3]}
+  echo ${loadavg_arr[1,3]}
 }
 
 #
@@ -99,9 +99,9 @@ function _zinfo_line::linux_battery_info()
   # TODO: Clean up following task
   if [[ -x $(which acpi) ]]
   then
-    acpi -b        |
-      grep Battery |
-      head -1      |
+    acpi -b 2>/dev/null |
+      grep Battery      |
+      head -1           |
       sed 's/[^,]*[^0-9]*\([0-9]*%\)[^0-9]*\([0-9:]*\).*/\1 \2/g'
   fi
 }
