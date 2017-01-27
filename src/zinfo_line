@@ -155,6 +155,10 @@ function zinfo_line()
 
   # battery info
   local s_acpi=$(_zinfo_line::formatted_battery_info)
+  if [[ -z ${s_acpi} ]]
+  then
+    s_acpi='nan'
+  fi
 
   # Intialize whole line length
   local -i terminal_width=${COLUMNS}
@@ -209,18 +213,14 @@ function zinfo_line()
     left_info+=${fg[green]}${s_cmd}${fg[default]}
   fi
 
-
   # Compute right info
   ## Compute available length and features
-  if [[ -n ${s_acpi} ]]
+  local right_info_separator="${right_info_symbols['head']}${right_info_symbols['tail']}"
+  terminal_width=$((${terminal_width} - ${#s_acpi} - ${#right_info_separator}))
+  if (( ${terminal_width} >= 0 ))
   then
-    local right_info_separator="${right_info_symbols['head']}${right_info_symbols['tail']}"
-    terminal_width=$((${terminal_width} - ${#s_acpi} - ${#right_info_separator}))
-    if (( ${terminal_width} >= 0 ))
-    then
-      enable_flags['acpi_info']=1
-      enable_flags['subinfo_separator']=1
-    fi
+    enable_flags['acpi_info']=1
+    enable_flags['subinfo_separator']=1
   fi
 
   terminal_width=$((${terminal_width} - ${#s_load} - ${#separators['top-batt']}))
