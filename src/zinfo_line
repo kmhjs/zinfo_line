@@ -116,12 +116,16 @@ function _zinfo_line::formatted_battery_info()
 
 function zinfo_line()
 {
-  # Exceptions (Commands to be ignored)
-  local -a exceptions=(${(s@:@)${ZMIDLINE_IGN_COMMAND}})
+  # Load pre-defined exception commands (Commands to be ignored)
+  local -a exceptions=()
+  if (( ${+ZMIDLINE_IGN_COMMAND} ))
+  then
+    exceptions+=${ZMIDLINE_IGN_COMMAND}
+  fi
 
   # If exceptions array contains last command, ignore.
-  local s_cmd=$(_zinfo_line::parse_lastcmd ${1})
-  if [[ ${exceptions[(I)$s_cmd]} != 0 ]]
+  local last_command=$(_zinfo_line::parse_lastcmd ${1})
+  if [[ ${exceptions[(I)${last_command}]} != 0 ]]
   then
     return 1
   fi
@@ -183,7 +187,7 @@ function zinfo_line()
 
   # Compute left info
   ## Compute available length and features
-  terminal_width=$((${terminal_width} - ${#s_cmd} - ${#heading_symbol}))
+  terminal_width=$((${terminal_width} - ${#last_command} - ${#heading_symbol}))
   if (( ${terminal_width} >= 0 ))
   then
     enable_flags['last_command_info']=1
@@ -210,7 +214,7 @@ function zinfo_line()
 
   if [[ ${enable_flags['last_command_info']} == 1 ]]
   then
-    left_info+=${fg[green]}${s_cmd}${fg[default]}
+    left_info+=${fg[green]}${last_command}${fg[default]}
   fi
 
   # Compute right info
