@@ -116,8 +116,12 @@ function _zinfo_line::formatted_battery_info()
 
 function zinfo_line()
 {
-  # Exceptions (Commands to be ignored)
-  local -a exceptions=(${(s@:@)${ZMIDLINE_IGN_COMMAND}})
+  # Load pre-defined exception commands (Commands to be ignored)
+  local -a exceptions=()
+  if (( ${+ZMIDLINE_IGN_COMMAND} ))
+  then
+    exceptions+=${ZMIDLINE_IGN_COMMAND}
+  fi
 
   # If exceptions array contains last command, ignore.
   local s_cmd=$(_zinfo_line::parse_lastcmd ${1})

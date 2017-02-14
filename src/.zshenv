@@ -1,1 +1,1 @@
-export ZMIDLINE_IGN_COMMAND=htop:top:vim
+typeset -ax ZMIDLINE_IGN_COMMAND=(htop top vim)
